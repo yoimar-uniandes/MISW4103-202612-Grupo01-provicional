@@ -48,6 +48,12 @@ Ghost runs as a Docker container connected to a MySQL 8 instance over an interna
 
 ## Getting Started
 
+### Desarrollo vs. Produccion: cual elegir
+
+Si tu objetivo es **explorar, familiarizarte con Ghost o realizar pruebas manuales/automatizadas**, usa el entorno de **desarrollo**. No requiere configuracion de correo y permite crear la cuenta de administrador directamente desde el navegador.
+
+Usa el entorno de **produccion** unicamente cuando necesites simular un despliegue real con envio de correos (invitaciones, restablecimiento de contrasena, magic links para miembros).
+
 ### Development (one-click)
 
 ```bash
@@ -64,16 +70,60 @@ The script automatically copies `example.env` to `.env` on first run, creates vo
 - **Blog:** http://localhost:2368
 - **Admin:** http://localhost:2368/ghost
 
-### Production
+La primera vez que accedas a http://localhost:2368/ghost, Ghost mostrara un formulario para **crear tu cuenta de administrador** (nombre, email y contrasena a tu eleccion). No se necesita correo real: el email solo se usa como identificador de login.
+
+Si ya creaste la cuenta anteriormente y no recuerdas las credenciales, puedes resetear los volumenes y empezar de cero:
 
 ```bash
-cp environment/production/example.env environment/production/.env
-# Edit .env with your domain, passwords, and mail settings
+./script/stop-services.sh dev --remove-volumes
+./script/start-dev.sh --detach
+```
 
+### Production
+
+La forma mas rapida de configurar produccion es usar el asistente interactivo:
+
+```bash
+./script/setup-prod.sh
+```
+
+El script te guiara paso a paso para configurar Ghost, MySQL y el correo SMTP. Las contrasenas se ingresan de forma enmascarada y las de MySQL pueden generarse automaticamente.
+
+Una vez completado, inicia los servicios:
+
+```bash
 ./script/start-prod.sh
 ```
 
-The production script validates that all required variables are set before starting.
+#### Configuracion manual (alternativa)
+
+Si prefieres configurar manualmente:
+
+```bash
+cp environment/production/example.env environment/production/.env
+# Edita .env con tu dominio, contrasenas y configuracion de correo
+```
+
+#### Configuracion de correo (requerida en produccion)
+
+Ghost en produccion necesita un servidor SMTP real para enviar correos transaccionales (invitaciones de usuario, restablecimiento de contrasena, links de inicio de sesion). Sin esta configuracion **no podras completar el flujo de login ni invitar colaboradores**.
+
+El script `setup-prod.sh` incluye presets para los proveedores mas comunes:
+
+| Proveedor | `MAIL_HOST` | `MAIL_PORT` | Notas |
+|-----------|-------------|-------------|-------|
+| Gmail | `smtp.gmail.com` | `587` | Requiere [App Password](https://myaccount.google.com/apppasswords) (2FA debe estar activo). No uses tu contrasena normal. |
+| Mailgun | `smtp.mailgun.org` | `465` | Usa las credenciales SMTP del dominio configurado en Mailgun. |
+| Amazon SES | Tu endpoint SES regional | `465` | Usa las claves SMTP de IAM, no las claves de acceso normales. |
+
+Si necesitas editar la configuracion despues, modifica `environment/production/.env` y reinicia:
+
+```bash
+./script/stop-services.sh prod
+./script/start-prod.sh
+```
+
+> **Referencia oficial:** https://ghost.org/docs/config/#mail
 
 ---
 
@@ -108,6 +158,7 @@ All scripts accept `dev` or `prod` as the first argument to target the correspon
 
 | Script                | Description                                              |
 |-----------------------|----------------------------------------------------------|
+| `./script/setup-prod.sh`     | Interactive wizard to configure production `.env`         |
 | `./script/start-dev.sh`      | Start development environment (foreground by default)    |
 | `./script/start-prod.sh`     | Start production environment (detached, with validation) |
 | `./script/stop-services.sh`  | Stop services (`--remove-volumes` to delete data)        |
@@ -180,6 +231,7 @@ ghost-blog-service/
 │       ├── docker-compose.yml     # Prod compose (hardened, with mail + limits)
 │       └── example.env            # Prod environment template
 ├── script/
+│   ├── setup-prod.sh              # Interactive production .env configurator
 │   ├── start-dev.sh               # One-click dev start
 │   ├── start-prod.sh              # One-click prod start (with validation)
 │   ├── stop-services.sh           # Stop services
@@ -222,7 +274,11 @@ This project is licensed under the [GNU General Public License v3.0](LICENSE).
 
 ## Authors
 
-<img src="https://aspirantes.uniandes.edu.co/sites/default/files/logo%20uniandes%20colombia%20negro.png" alt="Universidad de los Andes" style="background-color: white; padding: 10px; border-radius: 8px;" width="400">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://aspirantes.uniandes.edu.co/sites/default/files/logo%20uniandes%20colombia%20blanco.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://aspirantes.uniandes.edu.co/sites/default/files/logo%20uniandes%20colombia%20negro.png">
+  <img src="https://aspirantes.uniandes.edu.co/sites/default/files/logo%20uniandes%20colombia%20negro.png" alt="Universidad de los Andes" width="400">
+</picture>
 
 Students at [Universidad de los Andes](https://uniandes.edu.co), Bogotá, Colombia.
 
