@@ -1,0 +1,23 @@
+# ── Environment files ─────────────────────────────────────────────────────────
+environment/**/.env
+!environment/**/example.env
+
+# ── Docker volumes (persistent data) ─────────────────────────────────────────
+environment/**/volumes/
+volumes/
+
+# ── Backups ───────────────────────────────────────────────────────────────────
+environment/**/backups/
+backups/
+
+# ── OS files ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

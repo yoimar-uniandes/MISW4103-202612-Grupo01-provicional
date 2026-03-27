@@ -1,0 +1,17 @@
+# ── Auto detect text files and normalise line endings ─────────────────────────
+* text=auto
+
+# ── Shell scripts must use LF ────────────────────────────────────────────────
+*.sh text eol=lf
+
+# ── Docker / Compose ─────────────────────────────────────────────────────────
+Dockerfile text eol=lf
+docker-compose.yml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# ── Environment files ────────────────────────────────────────────────────────
+*.env text eol=lf
+
+# ── Documentation ────────────────────────────────────────────────────────────
+*.md text eol=lf

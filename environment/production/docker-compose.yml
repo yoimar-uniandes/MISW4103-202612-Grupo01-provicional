@@ -1,0 +1,94 @@
+# ┌──────────────────────────────────────────────────────────────────────────────┐
+# │  Ghost Blog Service — Production Compose                                   │
+# │  Usage: docker compose up -d                                               │
+# │  Admin: https://blog.yourdomain.com/ghost                                 │
+# └──────────────────────────────────────────────────────────────────────────────┘
+
+name: ghost-prod
+
+services:
+  # ── Ghost CMS ───────────────────────────────────────────────────────────────
+  ghost-prod:
+    image: ${GHOST_IMAGE:-ghost:5-alpine}
+    container_name: ghost-prod
+    restart: always
+    depends_on:
+      mysql-prod:
+        condition: service_healthy
+    ports:
+      - "${GHOST_PORT:-2368}:2368"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      url: ${GHOST_URL}
+      database__client: mysql
+      database__connection__host: mysql-prod
+      database__connection__port: 3306
+      database__connection__user: ${MYSQL_USER}
+      database__connection__password: ${MYSQL_PASSWORD}
+      database__connection__database: ${MYSQL_DATABASE}
+      # ── Mail ────────────────────────────────────────────────────────────────
+      mail__transport: ${MAIL_TRANSPORT:-SMTP}
+      mail__options__host: ${MAIL_HOST}
+      mail__options__port: ${MAIL_PORT:-587}
+      mail__options__secure: ${MAIL_SECURE:-true}
+      mail__options__auth__user: ${MAIL_USER}
+      mail__options__auth__pass: ${MAIL_PASSWORD}
+      mail__from: ${MAIL_FROM}
+    volumes:
+      - ${GHOST_CONTENT_PATH:-./volumes/ghost-prod/content}:/var/lib/ghost/content
+    networks:
+      - ghost-network-prod
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:2368/ghost/api/v4/admin/site/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ── MySQL 8 ─────────────────────────────────────────────────────────────────
+  mysql-prod:
+    image: ${MYSQL_IMAGE:-mysql:8.0}
+    container_name: ghost-mysql-prod
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    command: --default-authentication-plugin=caching_sha2_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --innodb-buffer-pool-size=128M --max-connections=100
+    volumes:
+      - ${MYSQL_DATA_PATH:-./volumes/mysql-prod/data}:/var/lib/mysql
+    networks:
+      - ghost-network-prod
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+networks:
+  ghost-network-prod:
+    driver: bridge

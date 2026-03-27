@@ -1,0 +1,69 @@
+{
+  "name": "ghost-blog-service",
+  "version": "1.0.0",
+  "description": "Self-hosted Ghost CMS deployment with Docker Compose, MySQL 8, and operational scripts for backup, restore, and monitoring.",
+  "private": true,
+  "keywords": [
+    "ghost",
+    "cms",
+    "docker",
+    "docker-compose",
+    "mysql",
+    "blog",
+    "self-hosted",
+    "uniandes",
+    "MISW4103"
+  ],
+  "homepage": "https://uniandes.edu.co",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yoimar-uniandes/MISW4103-202612-Grupo01"
+  },
+  "license": "GPL-3.0",
+  "authors": [
+    {
+      "name": "Yoimar Moreno Bertel",
+      "email": "y.morenob2@uniandes.edu.co"
+    },
+    {
+      "name": "Manfred Ariel Martinez Bastos",
+      "email": "ma.martinezb123@uniandes.edu.co"
+    },
+    {
+      "name": "Jhon Jairo Rincon Castro",
+      "email": "j.rinconc23@uniandes.edu.co"
+    },
+    {
+      "name": "Yesid Stevem Piñeros",
+      "email": "y.pineros@uniandes.edu.co"
+    }
+  ],
+  "institution": {
+    "name": "Universidad de los Andes",
+    "city": "Bogotá",
+    "country": "Colombia",
+    "url": "https://uniandes.edu.co",
+    "program": "MISW — Maestría en Ingeniería de Software",
+    "course": "MISW4103 — Pruebas Automatizadas",
+    "semester": "2026-12",
+    "group": "Grupo 01"
+  },
+  "engines": {
+    "docker": ">=20.10",
+    "docker-compose": ">=2.0"
+  },
+  "infrastructure": {
+    "ghost": "5-alpine",
+    "mysql": "8.0",
+    "node": "18 (bundled with Ghost)"
+  },
+  "scripts": {
+    "dev": "./script/start-dev.sh",
+    "prod": "./script/start-prod.sh",
+    "stop": "./script/stop-services.sh",
+    "logs": "./script/view-logs.sh",
+    "backup": "./script/create-backup.sh",
+    "restore": "./script/restore-backup.sh",
+    "status": "./script/check-status.sh"
+  }
+}

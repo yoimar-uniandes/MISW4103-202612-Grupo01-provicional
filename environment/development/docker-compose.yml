@@ -1,0 +1,64 @@
+# ┌──────────────────────────────────────────────────────────────────────────────┐
+# │  Ghost Blog Service — Development Compose                                  │
+# │  Usage: docker compose up --build                                          │
+# │  Admin: http://localhost:2368/ghost                                        │
+# └──────────────────────────────────────────────────────────────────────────────┘
+
+name: ghost-dev
+
+services:
+  # ── Ghost CMS ───────────────────────────────────────────────────────────────
+  ghost-dev:
+    image: ${GHOST_IMAGE:-ghost:5-alpine}
+    container_name: ghost-dev
+    restart: unless-stopped
+    depends_on:
+      mysql-dev:
+        condition: service_healthy
+    ports:
+      - "${GHOST_PORT:-2368}:2368"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      url: ${GHOST_URL:-http://localhost:2368}
+      database__client: mysql
+      database__connection__host: mysql-dev
+      database__connection__port: 3306
+      database__connection__user: ${MYSQL_USER:-ghost_user}
+      database__connection__password: ${MYSQL_PASSWORD:-ghost_dev_password}
+      database__connection__database: ${MYSQL_DATABASE:-ghost_dev}
+    volumes:
+      - ${GHOST_CONTENT_PATH:-./volumes/ghost-dev/content}:/var/lib/ghost/content
+    networks:
+      - ghost-network-dev
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:2368/ghost/api/v4/admin/site/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── MySQL 8 ─────────────────────────────────────────────────────────────────
+  mysql-dev:
+    image: ${MYSQL_IMAGE:-mysql:8.0}
+    container_name: ghost-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-ghost_root_dev_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ghost_dev}
+      MYSQL_USER: ${MYSQL_USER:-ghost_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ghost_dev_password}
+    command: --default-authentication-plugin=caching_sha2_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ${MYSQL_DATA_PATH:-./volumes/mysql-dev/data}:/var/lib/mysql
+    networks:
+      - ghost-network-dev
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-ghost_root_dev_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+networks:
+  ghost-network-dev:
+    driver: bridge
