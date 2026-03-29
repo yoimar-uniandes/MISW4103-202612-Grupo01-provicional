@@ -15,6 +15,16 @@ services:
     depends_on:
       mysql-prod:
         condition: service_healthy
+    entrypoint: >
+      sh -c "
+        echo 'Waiting for MySQL to be ready...';
+        until nc -z mysql-prod 3306 2>/dev/null; do
+          echo 'MySQL not ready, retrying in 5s...';
+          sleep 5;
+        done;
+        sleep 10;
+        exec docker-entrypoint.sh node current/index.js
+      "
     ports:
       - "${GHOST_PORT:-2368}:2368"
     environment:
