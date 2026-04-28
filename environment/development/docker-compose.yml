@@ -36,6 +36,10 @@ services:
       database__connection__user: ${MYSQL_USER:-ghost_user}
       database__connection__password: ${MYSQL_PASSWORD:-ghost_dev_password}
       database__connection__database: ${MYSQL_DATABASE:-ghost_dev}
+      # Verificación por correo del dispositivo del staff: desactivada para
+      # permitir que las pruebas E2E inicien sesión repetidamente sin SMTP.
+      # Default Ghost: true. Implementación: core/server/services/auth/session/index.js
+      security__staffDeviceVerification: "false"
     volumes:
       - ${GHOST_CONTENT_PATH:-./volumes/ghost-dev/content}:/var/lib/ghost/content
     networks:
