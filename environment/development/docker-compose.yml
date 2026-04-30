@@ -9,22 +9,12 @@ name: ghost-dev
 services:
   # ── Ghost CMS ───────────────────────────────────────────────────────────────
   ghost-dev:
-    image: ${GHOST_IMAGE:-ghost:5-alpine}
+    image: ${GHOST_IMAGE:-ghost:5.130.6-alpine}
     container_name: ghost-dev
     restart: unless-stopped
     depends_on:
       mysql-dev:
         condition: service_healthy
-    entrypoint: >
-      sh -c "
-        echo 'Waiting for MySQL to be ready...';
-        until nc -z mysql-dev 3306 2>/dev/null; do
-          echo 'MySQL not ready, retrying in 5s...';
-          sleep 5;
-        done;
-        sleep 10;
-        exec docker-entrypoint.sh node current/index.js
-      "
     ports:
       - "${GHOST_PORT:-2368}:2368"
     environment:
@@ -38,14 +28,13 @@ services:
       database__connection__database: ${MYSQL_DATABASE:-ghost_dev}
       # Verificación por correo del dispositivo del staff: desactivada para
       # permitir que las pruebas E2E inicien sesión repetidamente sin SMTP.
-      # Default Ghost: true. Implementación: core/server/services/auth/session/index.js
       security__staffDeviceVerification: "false"
     volumes:
-      - ${GHOST_CONTENT_PATH:-./volumes/ghost-dev/content}:/var/lib/ghost/content
+      - ${GHOST_CONTENT_PATH:-./volumes/ghost/content}:/var/lib/ghost/content
     networks:
       - ghost-network-dev
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:2368/ghost/api/v4/admin/site/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:2368/ghost/api/admin/site/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -63,11 +52,11 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ghost_dev_password}
     command: --default-authentication-plugin=caching_sha2_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - ${MYSQL_DATA_PATH:-./volumes/mysql-dev/data}:/var/lib/mysql
+      - ${MYSQL_DATA_PATH:-./volumes/mysql/data}:/var/lib/mysql
     networks:
       - ghost-network-dev
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-ghost_root_dev_password}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 10
